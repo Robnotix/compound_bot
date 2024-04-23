@@ -1,0 +1,11 @@
+fastapi==0.110.2
+numpy==1.24.4
+open3d==0.16.0
+pydantic==2.7.1
+pybotics==3.1.2
+pymycobot==3.4.5
+pyserial==3.5
+depthai==2.25.0.0
+matplotlib==3.7.5
+opencv_python==4.9.0.80
+RPi.GPIO==0.7.1
