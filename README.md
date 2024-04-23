@@ -20,17 +20,17 @@ Human interface for controlling the robot remotely
 ### ROS Workspace (TODO):
 So far this is a pure python implementation. Eventually it would be great to port the functionalities into ROS2 nodes.
 This would allow us to use the following ROS tools:
-- Cartographer for building maps for AGV navigation
-- Nav2 for autonomous AGV nagivation
-- Moveit for robot arm path planning
-- Gazebo for physics based simulation and empowering machine learning in simulation
-- Foxglove and Mcap for logging of structured data and easy visualization
+- [Cartographer](https://google-cartographer-ros.readthedocs.io/en/latest/) for building maps for AGV navigation
+- [Nav2](https://navigation.ros.org/) for autonomous AGV nagivation
+- [Moveit](https://moveit.ros.org/) for robot arm path planning
+- [Gazebo](https://gazebosim.org/home) for physics based simulation and empowering machine learning in simulation
+- [Foxglove]() and Mcap for logging of structured data and easy visualization
 
 # BOM:
 - 1X - [MyCobot280](https://shop.elephantrobotics.com/collections/mycobot-280/products/mycobot-worlds-smallest-and-lightest-six-axis-collaborative-robot)
-- 1X - [MyAgv](https://shop.elephantrobotics.com/collections/myagv-smart-navigation-robot/products/myagv-2023-pi)
+- 1X - [MyAgv](https://shop.elephantrobotiTelecs.com/collections/myagv-smart-navigation-robot/products/myagv-2023-pi)
 - 1X - [OAKD-Lite depth Camera](https://shop.luxonis.com/products/oak-d-lite-1)
-- 1X - [3D Printed Parts Set]() (TODO: add STL files to repo)
+- 1X - [3D Printed Parts Set](https://foxglove.dev/) (TODO: add STL files to repo)
 
 # Setup:
 
