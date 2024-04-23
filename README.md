@@ -25,3 +25,13 @@ This would allow us to use the following ROS tools:
 - Moveit for robot arm path planning
 - Gazebo for physics based simulation and empowering machine learning in simulation
 - Foxglove and Mcap for logging of structured data and easy visualization
+
+# BOM:
+- 1X - [MyCobot280](https://shop.elephantrobotics.com/collections/mycobot-280/products/mycobot-worlds-smallest-and-lightest-six-axis-collaborative-robot)
+- 1X - [MyAgv](https://shop.elephantrobotics.com/collections/myagv-smart-navigation-robot/products/myagv-2023-pi)
+- 1X - [OAKD-Lite depth Camera](https://shop.luxonis.com/products/oak-d-lite-1)
+- 1X - [3D Printed Parts Set]() (TODO: add STL files to repo)
+
+# Setup:
+
+TODO: Add setup docs
