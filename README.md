@@ -16,3 +16,12 @@ Client library that interfaces with the API
 
 ### [GUI (TODO)](teleoperation/gui/README.md)
 Human interface for controlling the robot remotely
+
+### ROS Workspace (TODO):
+So far this is a pure python implementation. Eventually it would be great to port the functionalities into ROS2 nodes.
+This would allow us to use the following ROS tools:
+- Cartographer for building maps for AGV navigation
+- Nav2 for autonomous AGV nagivation
+- Moveit for robot arm path planning
+- Gazebo for physics based simulation and empowering machine learning in simulation
+- Foxglove and Mcap for logging of structured data and easy visualization
