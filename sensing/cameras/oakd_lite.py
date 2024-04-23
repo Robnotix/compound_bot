@@ -181,7 +181,7 @@ class OAKDCam:
         return self._fps_tracker.fps
     
 if __name__ == "__main__":
-
+    
     cam = OAKDCam()
     cam.start()
     print("Started camera (Ctr+C to stop)")
