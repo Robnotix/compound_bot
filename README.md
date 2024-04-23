@@ -1,5 +1,7 @@
 # Compound Bot
 
+![robot picture](robot_pic.png)
+
 ## [Robot Control](robot_control/README.md)
 Drivers for controlling the MyAGV and the MyCobot robots from Elephant Robotics
 
