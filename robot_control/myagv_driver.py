@@ -41,7 +41,7 @@ class AGV:
             return (self._state.x_velocity,self._state.y_velocity,self._state.rz_velocity)
     
     @velocity.setter
-    def velocity(self,vel):
+    def velocity(self,vel:Tuple[float,float,float]):
         x_velocity,y_velocity,rz_velocity = vel
         for val in (x_velocity,y_velocity,rz_velocity):
             if not -1.0 <= val <= 1.0:
@@ -89,7 +89,7 @@ class AGV:
                 x_velocity,y_velocity,rz_velocity = new_x_velocity,new_y_velocity,new_rz_velocity
 
             # check the battery status every 30 seconds
-            if self._state.battery_status.time_checked is None or monotonic()-self._state.battery_status.time_checked > 30.0:
+            if self._state.battery_status.time_checked is None or monotonic()-self._state.battery_status.time_checked > 3.0:
                 battery_info = self.agv.get_battery_info()
                 if isinstance(battery_info,list) and len(battery_info) == 3:
                     battery_data, v1, v2 = battery_info
