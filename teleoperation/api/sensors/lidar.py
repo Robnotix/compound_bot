@@ -1,19 +1,12 @@
-from sensing.lidar import LidarScan, LidarX2
+from drivers.sensing.lidar import LidarScan
 from .router import router
 from threading import Lock
 import atexit
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 import asyncio
+from drivers.driver_dispatch import DriverDispatch
 
-DEFAULT_PORT = "/dev/ttyAMA0"
-lidar = LidarX2(DEFAULT_PORT)
-device_lock = Lock()
-
-if not lidar.open():
-    raise Exception("Failed to open lidar")
-
-atexit.register(lidar.close)
 
 html = """
 <!DOCTYPE html>
@@ -84,7 +77,7 @@ async def lidar_ws(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            with device_lock:
+            with DriverDispatch.borrow("lidar") as lidar:
                 scan = lidar.read()
             await websocket.send_json(scan.model_dump())
             await asyncio.sleep(0.05)
@@ -101,5 +94,5 @@ def get_lidar():
     """
     returns the most current lidar scan
     """
-    with device_lock:
+    with DriverDispatch.borrow("lidar") as lidar:
         return lidar.read()

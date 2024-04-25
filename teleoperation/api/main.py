@@ -3,7 +3,7 @@ import control.router
 import sensors.router
 from lifespan import lifespan
 
-app = FastAPI(lifespan = lifespan)
+app = FastAPI(lifespan = lifespan, title = "Robot Control API")
 
 
 app.include_router(control.router, prefix="/control", tags=["control"])

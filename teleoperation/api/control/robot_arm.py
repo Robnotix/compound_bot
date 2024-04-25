@@ -1,13 +1,11 @@
 from .router import router
 from pydantic import BaseModel
 from typing import Optional
-from robot_control.mycobot_driver import MyCobot280, se3_to_xyz_rpy, xyz_rpy_to_se3
-from threading import Lock
+from drivers.robot_control.mycobot_driver import se3_to_xyz_rpy, xyz_rpy_to_se3
 from fastapi import WebSocket, Response, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+from drivers.driver_dispatch import DriverDispatch
 
-robot_lock = Lock()
-robot = MyCobot280()
 
 class Pose(BaseModel):
     x:float = 0.0
@@ -41,13 +39,13 @@ class RobotJoints(BaseModel):
 
 @router.get("/robot_arm/speed")
 def get_speed():
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         speed = robot.speed
     return speed
 
 @router.put("/robot_arm/speed")
 def set_speed(speed: int):
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         robot.speed = speed
     return {"message": f"Robot arm speed set to {speed}"}
 
@@ -56,7 +54,7 @@ def get_pose():
     """
     Returns the current pose of the robot arm
     """
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         pose_mat = robot.pose()
     return Pose.from_se3(pose_mat)
 
@@ -66,7 +64,7 @@ def set_pose(offset: Pose):
     """
     Moves the robot arm to the specified target position
     """
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         target_pose = offset.to_se3()
         robot.movel(target_pose)
 
@@ -75,7 +73,7 @@ def set_reference(pose:Pose):
     """
     Sets the specified pose relative to the robot base as the reference position
     """
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         robot.pose_offset = pose.to_se3()
     return {"message": f"Robot arm reference position set to {pose}"}
 
@@ -84,7 +82,7 @@ def get_reference():
     """
     Returns the current reference position of the robot arm
     """
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         reference_pose = robot.pose_offset
     return Pose.from_se3(reference_pose)
 
@@ -93,7 +91,7 @@ def set_joints(joints: RobotJoints):
     """
     Moves the robot arm to the specified joint positions
     """
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         joint_angles = [joints.j1, joints.j2, joints.j3, joints.j4, joints.j5, joints.j6]
         robot.movej(joint_angles)
 
@@ -102,7 +100,7 @@ def get_joints():
     """
     Returns the current joint positions of the robot arm
     """
-    with robot_lock:
+    with DriverDispatch.borrow("robot_arm") as robot:
         joint_angles = robot.joints()
     return RobotJoints(j1=joint_angles[0], j2=joint_angles[1], j3=joint_angles[2], j4=joint_angles[3], j5=joint_angles[4], j6=joint_angles[5])
 
@@ -115,7 +113,7 @@ async def joints_ws(websocket: WebSocket):
             # receive data from client
             data = await websocket.receive_json()
             joints = RobotJoints.model_validate(data)
-            with robot_lock:
+            with DriverDispatch.borrow("robot_arm") as robot:
                 joint_angles = [joints.j1, joints.j2, joints.j3, joints.j4, joints.j5, joints.j6]
                 robot.movej(joint_angles,blocking=False)
     except WebSocketDisconnect:

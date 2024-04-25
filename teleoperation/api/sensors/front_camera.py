@@ -5,14 +5,7 @@ import asyncio
 from threading import Lock
 import base64
 import atexit
-
-from sensing.cameras.front_facing import FrontFacingCamera
-
-front_camera = FrontFacingCamera()
-front_camera.start()
-device_lock = Lock()
-
-atexit.register(front_camera.stop)
+from drivers.driver_dispatch import DriverDispatch
 
 html = """
 <!DOCTYPE html>
@@ -45,7 +38,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            with device_lock:
+            with DriverDispatch.borrow("front_camera") as front_camera:
                 img_bytes = front_camera.get_jpg()
             img_txt = base64.b64encode(img_bytes).decode("utf-8")
             await websocket.send_text(img_txt)
@@ -62,6 +55,6 @@ def get_front_camera():
     """
     returns the most current image from the front camera
     """
-    with device_lock:
+    with DriverDispatch.borrow("front_camera") as front_camera:
         img_bytes = front_camera.get_jpg()
     return Response(content=img_bytes, media_type="image/jpeg")

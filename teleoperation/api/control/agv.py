@@ -3,26 +3,21 @@ from enum import Enum
 from pydantic import BaseModel, field_validator
 from typing import Optional
 
-from robot_control.myagv_driver import AGV, AGVState
-from threading import Lock
 import asyncio
 from fastapi import WebSocket, Response, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 import atexit
 
-agv = AGV()
-agv_lock = Lock()
-agv.velocity = (0,0,0)
-def stop_at_exit():
-    agv.velocity = (0,0,0)
-atexit.register(stop_at_exit)
+from drivers.driver_dispatch import DriverDispatch
+from drivers.robot_control.myagv_driver import AGVState
+
 
 @router.put("/agv/stop")
 def stop_agv():
     """
     Sends a command to stop the AGV motion
     """
-    with agv_lock:
+    with DriverDispatch.borrow("agv") as agv:
         agv.velocity = (0,0,0)
     return {"message": "AGV stopped"}
 
@@ -61,7 +56,7 @@ async def move_agv(command: MotionCommand):
     - counterclockwise
     """
     speed = 0.5
-    with agv_lock:
+    with DriverDispatch.borrow("agv") as agv:
         try:
             if command.motion == MotionTypes.FORWARD:
                 agv.velocity = (speed, 0, 0)
@@ -85,7 +80,7 @@ def get_agv_state():
     """
     Returns the current state of the AGV
     """
-    with agv_lock:
+    with DriverDispatch.borrow("agv") as agv:
         state = agv.state
     return state
 
@@ -106,7 +101,7 @@ async def velocity_ws(websocket: WebSocket):
             assert -1.0 <= command.x <= 1.0, "x velocity must be between -1.0 and 1.0"
             assert -1.0 <= command.y <= 1.0, "y velocity must be between -1.0 and 1.0"
             assert -1.0 <= command.rz <= 1.0, "rz velocity must be between -1.0 and 1.0"
-            with agv_lock:
+            with DriverDispatch.borrow("agv") as agv:
                 agv.velocity = (command.x, command.y, command.rz)
             await asyncio.sleep(0.05)
             await websocket.send_json({"message": "ok"})

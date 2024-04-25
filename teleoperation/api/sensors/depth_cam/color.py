@@ -1,9 +1,9 @@
 from .router import router
-from .camera_singleton import depth_cam_lock, depth_camera
 from fastapi import WebSocket, Response, WebSocketDisconnect
 import asyncio
 from fastapi.responses import HTMLResponse
 import base64
+from drivers.driver_dispatch import DriverDispatch
 
 html = """
 <!DOCTYPE html>
@@ -31,7 +31,7 @@ def get_top_camera_video():
 
 @router.get("/color.jpg")
 async def get_color():
-    with depth_cam_lock:
+    with DriverDispatch.borrow("depth_camera") as depth_camera:
         img_bytes = depth_camera.get_jpg()
     return Response(content=img_bytes, media_type="image/jpeg")
 
@@ -41,7 +41,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            with depth_cam_lock:
+            with DriverDispatch.borrow("depth_camera") as depth_camera:
                 img_bytes = depth_camera.get_jpg()
             img_txt = base64.b64encode(img_bytes).decode("utf-8")
             await websocket.send_text(img_txt)
