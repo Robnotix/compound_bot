@@ -73,35 +73,39 @@ class AGV:
         return int(127*vel)+128
     
     def _run_thread(self):
-        x_velocity,y_velocity,rz_velocity = 0.0,0.0,0.0
-        while True:
-            with self._state_lock:
-                new_x_velocity,new_y_velocity,new_rz_velocity = self._state.x_velocity,self._state.y_velocity,self._state.rz_velocity
-            if new_x_velocity != x_velocity or new_y_velocity != y_velocity or new_rz_velocity != rz_velocity:
-                # scale values so that they are ints between 0-255
-                x_velocity_cmd = self._map_vel(new_x_velocity)
-                y_velocity_cmd = self._map_vel(new_y_velocity)
-                rz_velocity_cmd = self._map_vel(new_rz_velocity)
-                print(f"sending command {(x_velocity_cmd,y_velocity_cmd,rz_velocity_cmd)}")
-                self.agv._mesg(x_velocity_cmd,y_velocity_cmd,rz_velocity_cmd)
-                
-                # update velocity values
-                x_velocity,y_velocity,rz_velocity = new_x_velocity,new_y_velocity,new_rz_velocity
+        x_velocity,y_velocity,rz_velocity = None, None, None
+        try:
+            while True:
+                with self._state_lock:
+                    new_x_velocity,new_y_velocity,new_rz_velocity = self._state.x_velocity,self._state.y_velocity,self._state.rz_velocity
+                if new_x_velocity != x_velocity or new_y_velocity != y_velocity or new_rz_velocity != rz_velocity:
+                    # scale values so that they are ints between 0-255
+                    x_velocity_cmd = self._map_vel(new_x_velocity)
+                    y_velocity_cmd = self._map_vel(new_y_velocity)
+                    rz_velocity_cmd = self._map_vel(new_rz_velocity)
+                    print(f"sending command {(x_velocity_cmd,y_velocity_cmd,rz_velocity_cmd)}")
+                    self.agv._mesg(x_velocity_cmd,y_velocity_cmd,rz_velocity_cmd)
+                    
+                    # update velocity values
+                    x_velocity,y_velocity,rz_velocity = new_x_velocity,new_y_velocity,new_rz_velocity
 
-            # check the battery status every 30 seconds
-            if self._state.battery_status.time_checked is None or monotonic()-self._state.battery_status.time_checked > 3.0:
-                battery_info = self.agv.get_battery_info()
-                if isinstance(battery_info,list) and len(battery_info) == 3:
-                    battery_data, v1, v2 = battery_info
-                    battery_data_bits =[bool(int(bit)) for bit in battery_data]
-                    with self._state_lock:
-                        self._state.battery_status.battery_1.voltage = v1
-                        self._state.battery_status.battery_2.voltage = v2
-                        self._state.battery_status.time_checked = monotonic()
+                # check the battery status every 30 seconds
+                if self._state.battery_status.time_checked is None or monotonic()-self._state.battery_status.time_checked > 3.0:
+                    battery_info = self.agv.get_battery_info()
+                    if isinstance(battery_info,list) and len(battery_info) == 3:
+                        battery_data, v1, v2 = battery_info
+                        battery_data_bits =[bool(int(bit)) for bit in battery_data]
+                        with self._state_lock:
+                            self._state.battery_status.battery_1.voltage = v1
+                            self._state.battery_status.battery_2.voltage = v2
+                            self._state.battery_status.time_checked = monotonic()
 
-                        self._state.battery_status.battery_1.charging = battery_data_bits[2]
-                        self._state.battery_status.battery_2.charging = battery_data_bits[4]
-                        self._state.battery_status.battery_1.inserted = battery_data_bits[1]
-                        self._state.battery_status.battery_2.inserted = battery_data_bits[0]
-            sleep(0.1)
-    
+                            self._state.battery_status.battery_1.charging = battery_data_bits[2]
+                            self._state.battery_status.battery_2.charging = battery_data_bits[4]
+                            self._state.battery_status.battery_1.inserted = battery_data_bits[1]
+                            self._state.battery_status.battery_2.inserted = battery_data_bits[0]
+                sleep(0.1)
+        finally:
+            self.agv._mesg(128,128,128)
+            
+        

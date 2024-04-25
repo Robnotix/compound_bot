@@ -66,6 +66,7 @@ class LidarX2:
         self._scan_data = LidarScan()
         self._scan_data_lock = Lock()
         self.serial = None
+        self._open()
 
     def _turn_on(cls):
         """Turn on the lidar power"""
@@ -84,9 +85,10 @@ class LidarX2:
         sleep(0.01)
         GPIO.output(20,0)
 
-    def open(self):
+    def _open(self):
         try:
             self._turn_on()
+            atexit.register(self._close)
             atexit.register(self._turn_off)
             if not self.connected:
                 # Open serial
@@ -110,7 +112,7 @@ class LidarX2:
             print(e)
         return False
 
-    def close(self):
+    def _close(self):
         self.stopThread = True
         if self.measureThread:
             self.measureThread.join()
@@ -252,16 +254,11 @@ if __name__ == "__main__":
 
     lidar = LidarX2(args.port)
 
-    if not lidar.open():
-        print("Cannot open lidar")
-        exit(1)
-
     t = time.time()
     while time.time() - t < args.duration:  # Run for 20 seconds
         measures = lidar.read()  # Get latest lidar measures
         print(measures)
         time.sleep(0.5)
 
-    lidar.close()
     if args.save_plot_as:
         measures.plot(save_as=args.save_plot_as, show=False)
