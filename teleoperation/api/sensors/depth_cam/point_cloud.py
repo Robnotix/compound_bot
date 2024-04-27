@@ -1,7 +1,7 @@
 from .router import router
 from fastapi import WebSocket, WebSocketDisconnect
 import asyncio
-from .camera_singleton import depth_cam_lock, depth_camera
+from drivers.driver_dispatch import DriverDispatch
 import numpy as np
 from typing import List, Tuple
 from fastapi.responses import FileResponse, HTMLResponse
@@ -13,7 +13,7 @@ import json
 
 @router.get("/point_cloud", response_model=List[Tuple[float,float,float]])
 async def get_point_cloud():
-    with depth_cam_lock:
+    with DriverDispatch.borrow("depth_camera") as depth_camera:
         pcd = depth_camera.get_pcd()
     if pcd is not None:
         # pcd is an o3d PointCloud
@@ -24,7 +24,7 @@ async def get_point_cloud():
     
 @router.get("/point_cloud.pcd",response_class=FileResponse)
 def get_point_cloud_pcd():
-    with depth_cam_lock:
+    with DriverDispatch.borrow("depth_camera") as depth_camera:
         pcd = depth_camera.get_pcd()
     if pcd is not None:
         # pcd is an o3d PointCloud
@@ -42,7 +42,7 @@ async def point_cloud_ws(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            with depth_cam_lock:
+            with DriverDispatch.borrow("depth_camera") as depth_camera:
                 pcd = depth_camera.get_pcd()
             X,Y,Z = np.asarray(pcd.points).T
             data = {
@@ -135,7 +135,7 @@ def get_point_cloud_plot():
         </script>
     </body>
     """
-    with depth_cam_lock:
+    with DriverDispatch.borrow("depth_camera") as depth_camera:
         pcd = depth_camera.get_pcd()
     if pcd is not None:
         # downsample before retuning

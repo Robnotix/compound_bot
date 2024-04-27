@@ -6,6 +6,7 @@ import cv2
 from threading import Thread, Lock
 import open3d as o3d
 from time import sleep, time
+import atexit
 
 class FPSTracker:
     """Class to track the FPS of a process. FPS is calculated as the average FPS over the last N_FRAMES frames."""
@@ -54,6 +55,7 @@ class OAKDCam:
         self._pcd = None
         self._running = False
         self._fps_tracker = FPSTracker()
+        self._start()
     
     def _setup_color_cam(self):
         self.color_cam = self.pipeline.create(dai.node.ColorCamera)
@@ -132,7 +134,7 @@ class OAKDCam:
                         self._pcd = inPointCloud.getPoints().astype(np.float64)
                 self._fps_tracker.register_frame()
     
-    def start(self):
+    def _start(self):
         """Start streaming images from the camera"""
         with self._running_status_lock:
             self._running = True
@@ -143,11 +145,13 @@ class OAKDCam:
             if self.get_fps() > 10:
                 break
             sleep(0.5)
+        atexit.register(self._stop)
     
-    def stop(self):
+    def _stop(self):
         """Stop Streaming images from the camera"""
         with self._running_status_lock:
             self._running = False
+        self._thread.join()
 
 
     def get_img(self)->np.ndarray:
@@ -183,10 +187,7 @@ class OAKDCam:
 if __name__ == "__main__":
     
     cam = OAKDCam()
-    cam.start()
     print("Started camera (Ctr+C to stop)")
-
-    
     try:
         while True:
             latest_img = cam.get_img()
@@ -195,8 +196,6 @@ if __name__ == "__main__":
             sleep(2)
     except KeyboardInterrupt:
         print("Stopping camera")
-    finally:
-        cam.stop()
     save = input("save latest frames? [y/N]").lower() == "y"
     if save:
         cv2.imwrite("frame.jpg", latest_img)

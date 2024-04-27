@@ -21,20 +21,21 @@ class FrontFacingCamera:
 
         if not self.cap.isOpened():
             raise Exception(f"Could not open camera {self.camera_number}")
-    
+            
+        self._start()
         atexit.register(self._close)
     
     def read(self):
         with self._frame_lock:
             return self._frame.copy()
         
-    def start(self):
+    def _start(self):
         self._should_run_thread = True
         self._thread = Thread(target=self._run)
         self._thread.setDaemon(True)
         self._thread.start()
 
-    def stop(self):
+    def _stop(self):
         with self._should_run_thread_lock:
             self._should_run_thread = False
         self._thread.join()
@@ -52,6 +53,7 @@ class FrontFacingCamera:
             sleep(0.025)
     
     def _close(self):
+        self._stop()
         self.cap.release()
 
     def save_frame(self, filename:str):
